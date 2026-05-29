@@ -20,10 +20,14 @@ will download them automatically on the first run if they are not present.
 from __future__ import annotations
 
 import argparse
+import logging
 import time
 import cv2
 import numpy as np
 from ultralytics import YOLO
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+log = logging.getLogger(__name__)
 
 # --- Configuration -----------------------------------------------------------
 
@@ -154,6 +158,8 @@ def main() -> None:
     webcam = cv2.VideoCapture(args.camera)
     if not webcam.isOpened():
         raise RuntimeError(f"Could not open webcam (device index {args.camera}).")
+    log.info("Webcam opened (index=%d).", args.camera)
+    log.info("Tracking keypoint index %d (%s).", tracked_index, "left wrist" if args.left_hand else "right wrist")
 
     model = YOLO(MODEL_PATH)
     prev_time = time.time()
