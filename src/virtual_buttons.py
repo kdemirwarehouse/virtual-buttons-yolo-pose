@@ -41,8 +41,9 @@ LEFT_COLOR = (0, 0, 255)       # red
 RIGHT_COLOR = (0, 255, 255)    # yellow
 WRIST_COLOR = (0, 255, 0)      # green
 
-# Press 'q' to quit.
+# Press 'q' or ESC to quit.
 QUIT_KEY = ord("q")
+ESC_KEY = 27
 WAIT_KEY_DELAY_MS = 5
 
 
@@ -161,7 +162,8 @@ def main() -> None:
             draw_button(annotated_frame, RIGHT_BUTTON, RIGHT_COLOR, "Right", right_pressed)
 
             cv2.imshow(WINDOW_NAME, annotated_frame)
-            if cv2.waitKey(WAIT_KEY_DELAY_MS) & 0xFF == QUIT_KEY:
+            key = cv2.waitKey(WAIT_KEY_DELAY_MS) & 0xFF
+            if key == QUIT_KEY or key == ESC_KEY:
                 break
     finally:
         webcam.release()
