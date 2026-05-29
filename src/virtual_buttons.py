@@ -1,28 +1,59 @@
 """
 Virtual Buttons with YOLO11 Pose Estimation.
 
-This script captures frames from the default webcam, runs the YOLO11 pose model
-on every frame, extracts the right-wrist keypoint, and renders two virtual
-buttons (LEFT and RIGHT). When the wrist is inside a button rectangle, the
-button is filled to indicate that it is being "pressed".
+Run a YOLO11 pose-estimation model on a live webcam stream, track the
+right-wrist keypoint and trigger one of two virtual on-screen buttons when the
+wrist enters its bounding rectangle.
+
+Controls
+--------
+q : quit the application.
+
+Usage
+-----
+    python src/virtual_buttons.py
+
+The YOLO11 pose weights are expected at ``model/yolo11m-pose.pt``. Ultralytics
+will download them automatically on the first run if they are not present.
 """
+
+from __future__ import annotations
 
 import cv2
 import numpy as np
 from ultralytics import YOLO
 
+# --- Configuration -----------------------------------------------------------
+
 MODEL_PATH = "model/yolo11m-pose.pt"
+WINDOW_NAME = "Virtual Buttons"
+
+# COCO-17 keypoint indices used by Ultralytics pose models.
 RIGHT_WRIST_INDEX = 10
 
+# Virtual button rectangles in pixel coordinates: (x1, y1, x2, y2).
 LEFT_BUTTON = (30, 30, 160, 120)
 RIGHT_BUTTON = (430, 30, 560, 120)
 
-LEFT_COLOR = (0, 0, 255)
-RIGHT_COLOR = (0, 255, 255)
-WRIST_COLOR = (0, 255, 0)
+# BGR colors.
+LEFT_COLOR = (0, 0, 255)       # red
+RIGHT_COLOR = (0, 255, 255)    # yellow
+WRIST_COLOR = (0, 255, 0)      # green
+
+# Press 'q' to quit.
+QUIT_KEY = ord("q")
+WAIT_KEY_DELAY_MS = 5
+
+
+# --- Helpers -----------------------------------------------------------------
 
 
 def get_right_wrist(results) -> tuple[int, int] | tuple[None, None]:
+    """Return the pixel ``(x, y)`` of the right wrist in the first detection.
+
+    Returns ``(None, None)`` if no person was detected or the keypoint is
+    unavailable / NaN.
+    """
     if results.keypoints is None or results.keypoints.xy is None:
         return None, None
 
@@ -37,15 +68,21 @@ def get_right_wrist(results) -> tuple[int, int] | tuple[None, None]:
     return int(kp[0].item()), int(kp[1].item())
 
 
-def point_in_rect(point, rect) -> bool:
-    """Return True if `point=(x, y)` is inside the axis-aligned rectangle."""
+def point_in_rect(point: tuple[int, int], rect: tuple[int, int, int, int]) -> bool:
+    """Return ``True`` if ``point`` lies inside the axis-aligned rectangle."""
     x, y = point
     x1, y1, x2, y2 = rect
     return x1 <= x <= x2 and y1 <= y <= y2
 
 
-def draw_button(frame, rect, color, label, pressed: bool) -> None:
-    """Draw a virtual button. If `pressed` is True the rectangle is filled."""
+def draw_button(
+    frame: np.ndarray,
+    rect: tuple[int, int, int, int],
+    color: tuple[int, int, int],
+    label: str,
+    pressed: bool,
+) -> None:
+    """Draw an outlined or filled button rectangle with a label above it."""
     x1, y1, x2, y2 = rect
     thickness = -1 if pressed else 3
     cv2.rectangle(frame, (x1, y1), (x2, y2), color, thickness)
@@ -61,6 +98,24 @@ def draw_button(frame, rect, color, label, pressed: bool) -> None:
     )
 
 
+def draw_wrist_marker(frame: np.ndarray, point: tuple[int, int]) -> None:
+    """Draw a green dot and the ``KP10`` label at the wrist position."""
+    cv2.circle(frame, point, 5, WRIST_COLOR, -1)
+    cv2.putText(
+        frame,
+        "KP10",
+        (point[0] + 6, point[1] - 6),
+        cv2.FONT_HERSHEY_PLAIN,
+        1,
+        WRIST_COLOR,
+        1,
+        cv2.LINE_AA,
+    )
+
+
+# --- Main loop ---------------------------------------------------------------
+
+
 def main() -> None:
     webcam = cv2.VideoCapture(0)
     if not webcam.isOpened():
@@ -68,43 +123,35 @@ def main() -> None:
 
     model = YOLO(MODEL_PATH)
 
-    while True:
-        ret, frame = webcam.read()
-        if not ret:
-            break
+    try:
+        while True:
+            ret, frame = webcam.read()
+            if not ret:
+                break
 
-        frame = cv2.flip(frame, 1)
-        results = model(frame)[0]
-        annotated_frame = results.plot()
+            frame = cv2.flip(frame, 1)
 
-        wrist_x, wrist_y = get_right_wrist(results)
-        wrist_point = (wrist_x, wrist_y) if wrist_x is not None else None
+            results = model(frame)[0]
+            annotated_frame = results.plot()
 
-        if wrist_point is not None:
-            cv2.circle(annotated_frame, wrist_point, 5, WRIST_COLOR, -1)
-            cv2.putText(
-                annotated_frame,
-                "KP10",
-                (wrist_point[0] + 6, wrist_point[1] - 6),
-                cv2.FONT_HERSHEY_PLAIN,
-                1,
-                WRIST_COLOR,
-                1,
-                cv2.LINE_AA,
-            )
+            wrist_x, wrist_y = get_right_wrist(results)
+            wrist_point = (wrist_x, wrist_y) if wrist_x is not None else None
 
-        left_pressed = wrist_point is not None and point_in_rect(wrist_point, LEFT_BUTTON)
-        right_pressed = wrist_point is not None and point_in_rect(wrist_point, RIGHT_BUTTON)
+            if wrist_point is not None:
+                draw_wrist_marker(annotated_frame, wrist_point)
 
-        draw_button(annotated_frame, LEFT_BUTTON, LEFT_COLOR, "Left", left_pressed)
-        draw_button(annotated_frame, RIGHT_BUTTON, RIGHT_COLOR, "Right", right_pressed)
+            left_pressed = wrist_point is not None and point_in_rect(wrist_point, LEFT_BUTTON)
+            right_pressed = wrist_point is not None and point_in_rect(wrist_point, RIGHT_BUTTON)
 
-        cv2.imshow("Virtual Buttons", annotated_frame)
-        if cv2.waitKey(5) & 0xFF == ord("q"):
-            break
+            draw_button(annotated_frame, LEFT_BUTTON, LEFT_COLOR, "Left", left_pressed)
+            draw_button(annotated_frame, RIGHT_BUTTON, RIGHT_COLOR, "Right", right_pressed)
 
-    webcam.release()
-    cv2.destroyAllWindows()
+            cv2.imshow(WINDOW_NAME, annotated_frame)
+            if cv2.waitKey(WAIT_KEY_DELAY_MS) & 0xFF == QUIT_KEY:
+                break
+    finally:
+        webcam.release()
+        cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
