@@ -19,6 +19,7 @@ will download them automatically on the first run if they are not present.
 
 from __future__ import annotations
 
+import argparse
 import time
 import cv2
 import numpy as np
@@ -135,10 +136,17 @@ def draw_counters(frame: np.ndarray, left_count: int, right_count: int) -> None:
 # --- Main loop ---------------------------------------------------------------
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Virtual Buttons with YOLO11 Pose")
+    parser.add_argument("--camera", type=int, default=0, help="Camera device index (default: 0)")
+    return parser.parse_args()
+
+
 def main() -> None:
-    webcam = cv2.VideoCapture(0)
+    args = parse_args()
+    webcam = cv2.VideoCapture(args.camera)
     if not webcam.isOpened():
-        raise RuntimeError("Could not open webcam (device index 0).")
+        raise RuntimeError(f"Could not open webcam (device index {args.camera}).")
 
     model = YOLO(MODEL_PATH)
     prev_time = time.time()
