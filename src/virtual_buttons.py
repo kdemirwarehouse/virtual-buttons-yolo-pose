@@ -2,8 +2,9 @@
 Virtual Buttons with YOLO11 Pose Estimation.
 
 This script captures frames from the default webcam, runs the YOLO11 pose model
-on every frame, extracts the right-wrist keypoint, and draws two virtual
-buttons (LEFT and RIGHT) on the preview as empty rectangles.
+on every frame, extracts the right-wrist keypoint, and renders two virtual
+buttons (LEFT and RIGHT). When the wrist is inside a button rectangle, the
+button is filled to indicate that it is being "pressed".
 """
 
 import cv2
@@ -13,18 +14,15 @@ from ultralytics import YOLO
 MODEL_PATH = "model/yolo11m-pose.pt"
 RIGHT_WRIST_INDEX = 10
 
-# Virtual button rectangles: (x1, y1, x2, y2).
 LEFT_BUTTON = (30, 30, 160, 120)
 RIGHT_BUTTON = (430, 30, 560, 120)
 
-# BGR colors.
-LEFT_COLOR = (0, 0, 255)      # red
-RIGHT_COLOR = (0, 255, 255)   # yellow
-WRIST_COLOR = (0, 255, 0)     # green
+LEFT_COLOR = (0, 0, 255)
+RIGHT_COLOR = (0, 255, 255)
+WRIST_COLOR = (0, 255, 0)
 
 
 def get_right_wrist(results) -> tuple[int, int] | tuple[None, None]:
-    """Return the (x, y) pixel coordinates of the right wrist, or (None, None)."""
     if results.keypoints is None or results.keypoints.xy is None:
         return None, None
 
@@ -39,10 +37,18 @@ def get_right_wrist(results) -> tuple[int, int] | tuple[None, None]:
     return int(kp[0].item()), int(kp[1].item())
 
 
-def draw_button(frame, rect, color, label) -> None:
-    """Draw a virtual button outline with a label above it."""
+def point_in_rect(point, rect) -> bool:
+    """Return True if `point=(x, y)` is inside the axis-aligned rectangle."""
+    x, y = point
     x1, y1, x2, y2 = rect
-    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 3)
+    return x1 <= x <= x2 and y1 <= y <= y2
+
+
+def draw_button(frame, rect, color, label, pressed: bool) -> None:
+    """Draw a virtual button. If `pressed` is True the rectangle is filled."""
+    x1, y1, x2, y2 = rect
+    thickness = -1 if pressed else 3
+    cv2.rectangle(frame, (x1, y1), (x2, y2), color, thickness)
     cv2.putText(
         frame,
         label,
@@ -72,12 +78,14 @@ def main() -> None:
         annotated_frame = results.plot()
 
         wrist_x, wrist_y = get_right_wrist(results)
-        if wrist_x is not None and wrist_y is not None:
-            cv2.circle(annotated_frame, (wrist_x, wrist_y), 5, WRIST_COLOR, -1)
+        wrist_point = (wrist_x, wrist_y) if wrist_x is not None else None
+
+        if wrist_point is not None:
+            cv2.circle(annotated_frame, wrist_point, 5, WRIST_COLOR, -1)
             cv2.putText(
                 annotated_frame,
                 "KP10",
-                (wrist_x + 6, wrist_y - 6),
+                (wrist_point[0] + 6, wrist_point[1] - 6),
                 cv2.FONT_HERSHEY_PLAIN,
                 1,
                 WRIST_COLOR,
@@ -85,8 +93,11 @@ def main() -> None:
                 cv2.LINE_AA,
             )
 
-        draw_button(annotated_frame, LEFT_BUTTON, LEFT_COLOR, "Left")
-        draw_button(annotated_frame, RIGHT_BUTTON, RIGHT_COLOR, "Right")
+        left_pressed = wrist_point is not None and point_in_rect(wrist_point, LEFT_BUTTON)
+        right_pressed = wrist_point is not None and point_in_rect(wrist_point, RIGHT_BUTTON)
+
+        draw_button(annotated_frame, LEFT_BUTTON, LEFT_COLOR, "Left", left_pressed)
+        draw_button(annotated_frame, RIGHT_BUTTON, RIGHT_COLOR, "Right", right_pressed)
 
         cv2.imshow("Virtual Buttons", annotated_frame)
         if cv2.waitKey(5) & 0xFF == ord("q"):
