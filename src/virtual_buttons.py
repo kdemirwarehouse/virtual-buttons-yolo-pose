@@ -125,6 +125,13 @@ def draw_fps(frame: np.ndarray, fps: float) -> None:
     cv2.putText(frame, text, (w - 110, 20), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1, cv2.LINE_AA)
 
 
+def draw_counters(frame: np.ndarray, left_count: int, right_count: int) -> None:
+    """Render press counters for left and right buttons at the bottom of *frame*."""
+    h, w = frame.shape[:2]
+    cv2.putText(frame, f"L: {left_count}", (10, h - 10), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 1, cv2.LINE_AA)
+    cv2.putText(frame, f"R: {right_count}", (w - 80, h - 10), cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 255), 1, cv2.LINE_AA)
+
+
 # --- Main loop ---------------------------------------------------------------
 
 
@@ -137,6 +144,10 @@ def main() -> None:
     prev_time = time.time()
     left_hold = 0
     right_hold = 0
+    left_count = 0
+    right_count = 0
+    left_was_pressed = False
+    right_was_pressed = False
 
     try:
         while True:
@@ -169,8 +180,16 @@ def main() -> None:
             left_pressed = left_hold >= DEBOUNCE_FRAMES
             right_pressed = right_hold >= DEBOUNCE_FRAMES
 
+            if left_pressed and not left_was_pressed:
+                left_count += 1
+            if right_pressed and not right_was_pressed:
+                right_count += 1
+            left_was_pressed = left_pressed
+            right_was_pressed = right_pressed
+
             draw_button(annotated_frame, LEFT_BUTTON, LEFT_COLOR, "Left", left_pressed)
             draw_button(annotated_frame, RIGHT_BUTTON, RIGHT_COLOR, "Right", right_pressed)
+            draw_counters(annotated_frame, left_count, right_count)
 
             cv2.imshow(WINDOW_NAME, annotated_frame)
             key = cv2.waitKey(WAIT_KEY_DELAY_MS) & 0xFF
