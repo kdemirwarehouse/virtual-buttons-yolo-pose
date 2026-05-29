@@ -109,6 +109,14 @@ automatically. Move it into the `model/` folder afterwards (or change
 
 Press **`q`** or **`ESC`** to quit.
 
+## Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `q` | Quit the application |
+| `ESC` | Quit the application |
+| `s` | Toggle YOLO skeleton overlay on / off |
+
 ## How It Works
 
 1. **Capture** — `cv2.VideoCapture(0)` reads frames from the default webcam.
