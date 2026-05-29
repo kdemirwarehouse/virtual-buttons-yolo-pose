@@ -173,6 +173,15 @@ the green `KP10` marker is visible.
 - NumPy
 - Ultralytics YOLO11 Pose
 
+## Future Work
+
+- [ ] Add a "click" debounce so the buttons don't trigger every single frame.
+- [ ] Map button presses to real OS actions (volume up/down, slide next/prev).
+- [ ] Support left wrist (KP9) and let the user pick which hand to track.
+- [ ] Configurable layout (number of buttons, positions, labels) via a JSON file.
+- [ ] Replace the rectangle hit-test with circular buttons for nicer visuals.
+- [ ] Export an `.onnx` / `.engine` variant of the model for faster inference.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
