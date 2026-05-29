@@ -54,24 +54,29 @@ DEBOUNCE_FRAMES = 6
 # --- Helpers -----------------------------------------------------------------
 
 
-def get_right_wrist(results) -> tuple[int, int] | tuple[None, None]:
-    """Return the pixel ``(x, y)`` of the right wrist in the first detection.
+def get_keypoint(results, index: int) -> tuple[int, int] | tuple[None, None]:
+    """Return the pixel ``(x, y)`` of the given COCO-17 keypoint in the first detection.
 
-    Returns ``(None, None)`` if no person was detected or the keypoint is
-    unavailable / NaN.
+    Returns ``(None, None)`` if no person was detected, the keypoint index is
+    out of range, or the value is NaN.
     """
     if results.keypoints is None or results.keypoints.xy is None:
         return None, None
 
     keypoints = results.keypoints.xy
-    if len(keypoints) == 0 or keypoints.shape[1] <= RIGHT_WRIST_INDEX:
+    if len(keypoints) == 0 or keypoints.shape[1] <= index:
         return None, None
 
-    kp = keypoints[0, RIGHT_WRIST_INDEX]
+    kp = keypoints[0, index]
     if np.isnan(kp[0].item()) or np.isnan(kp[1].item()):
         return None, None
 
     return int(kp[0].item()), int(kp[1].item())
+
+
+def get_right_wrist(results) -> tuple[int, int] | tuple[None, None]:
+    """Convenience wrapper: right wrist is COCO-17 keypoint 10."""
+    return get_keypoint(results, RIGHT_WRIST_INDEX)
 
 
 def point_in_rect(point: tuple[int, int], rect: tuple[int, int, int, int]) -> bool:
