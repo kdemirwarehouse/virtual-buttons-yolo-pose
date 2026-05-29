@@ -21,6 +21,22 @@ on-screen buttons whenever the wrist enters its area.
 - Mirrored preview so movement feels natural.
 - Clean shutdown with `q` and `try/finally` guard around the capture loop.
 
+## Demo
+
+> Add screenshots / GIFs under `docs/screenshots/` and reference them here.
+
+```
+docs/screenshots/preview.png
+docs/screenshots/left_pressed.png
+docs/screenshots/right_pressed.png
+```
+
+Example embed:
+
+```markdown
+![Preview](docs/screenshots/preview.png)
+```
+
 ## Project Structure
 
 ```
