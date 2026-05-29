@@ -1,0 +1,15 @@
+# Core dependencies for the Virtual Buttons (YOLO11 Pose) project
+# Tested on Python 3.10+ / Windows 10/11 with Conda
+
+# Computer vision
+opencv-python>=4.8.0
+
+# Numerical computing
+numpy>=1.24.0
+
+# YOLO11 pose estimation
+ultralytics>=8.3.0
+
+# PyTorch is installed as a transitive dependency of ultralytics.
+# If you need a CUDA-specific build, install it manually first:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
