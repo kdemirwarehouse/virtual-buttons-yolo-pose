@@ -1,5 +1,10 @@
 # Virtual Buttons with YOLO11 Pose
 
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![OpenCV](https://img.shields.io/badge/OpenCV-4.8%2B-green)
+![Ultralytics](https://img.shields.io/badge/Ultralytics-YOLO11-purple)
+![License](https://img.shields.io/badge/license-MIT-yellow)
+
 A small, beginner-friendly computer-vision demo that turns your webcam into a
 touchless interface. The app runs a **YOLO11 pose-estimation** model on every
 frame, locks onto the **right-wrist keypoint** and "presses" one of two
