@@ -166,6 +166,16 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
 Make sure your right hand (the wrist) is fully inside the rectangle and that
 the green `KP10` marker is visible.
 
+## Performance Tips
+
+| Tip | Expected gain |
+|-----|--------------|
+| Use `yolo11n-pose.pt` (nano) instead of medium | +10–15 FPS on CPU |
+| Lower webcam resolution: `webcam.set(cv2.CAP_PROP_FRAME_WIDTH, 640)` | Reduced inference time |
+| Install a CUDA-matched PyTorch build | 3–5× FPS on GPU |
+| Increase `WAIT_KEY_DELAY_MS` to 15–20 | Frees CPU between frames |
+| Disable skeleton overlay: change `results.plot()` to `annotated_frame = frame.copy()` | Removes per-frame drawing cost |
+
 ## Tech Stack
 
 - Python 3.10+
