@@ -144,11 +144,13 @@ def draw_counters(frame: np.ndarray, left_count: int, right_count: int) -> None:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Virtual Buttons with YOLO11 Pose")
     parser.add_argument("--camera", type=int, default=0, help="Camera device index (default: 0)")
+    parser.add_argument("--left-hand", action="store_true", help="Track left wrist (KP9) instead of right (KP10)")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    tracked_index = LEFT_WRIST_INDEX if args.left_hand else RIGHT_WRIST_INDEX
     webcam = cv2.VideoCapture(args.camera)
     if not webcam.isOpened():
         raise RuntimeError(f"Could not open webcam (device index {args.camera}).")
@@ -178,11 +180,12 @@ def main() -> None:
             prev_time = now
             draw_fps(annotated_frame, fps)
 
-            wrist_x, wrist_y = get_right_wrist(results)
+            wrist_x, wrist_y = get_keypoint(results, tracked_index)
             wrist_point = (wrist_x, wrist_y) if wrist_x is not None else None
+            kp_label = f"KP{tracked_index}"
 
             if wrist_point is not None:
-                draw_wrist_marker(annotated_frame, wrist_point)
+                draw_wrist_marker(annotated_frame, wrist_point, label=kp_label)
 
             in_left = wrist_point is not None and point_in_rect(wrist_point, LEFT_BUTTON)
             in_right = wrist_point is not None and point_in_rect(wrist_point, RIGHT_BUTTON)
