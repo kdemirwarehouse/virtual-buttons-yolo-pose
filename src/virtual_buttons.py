@@ -19,6 +19,7 @@ will download them automatically on the first run if they are not present.
 
 from __future__ import annotations
 
+import time
 import cv2
 import numpy as np
 from ultralytics import YOLO
@@ -98,12 +99,12 @@ def draw_button(
     )
 
 
-def draw_wrist_marker(frame: np.ndarray, point: tuple[int, int]) -> None:
-    """Draw a green dot and the ``KP10`` label at the wrist position."""
+def draw_wrist_marker(frame: np.ndarray, point: tuple[int, int], label: str = "KP10") -> None:
+    """Draw a green dot and a keypoint label at the wrist position."""
     cv2.circle(frame, point, 5, WRIST_COLOR, -1)
     cv2.putText(
         frame,
-        "KP10",
+        label,
         (point[0] + 6, point[1] - 6),
         cv2.FONT_HERSHEY_PLAIN,
         1,
@@ -111,6 +112,13 @@ def draw_wrist_marker(frame: np.ndarray, point: tuple[int, int]) -> None:
         1,
         cv2.LINE_AA,
     )
+
+
+def draw_fps(frame: np.ndarray, fps: float) -> None:
+    """Render the current FPS in the top-right corner of *frame*."""
+    h, w = frame.shape[:2]
+    text = f"FPS: {fps:.1f}"
+    cv2.putText(frame, text, (w - 110, 20), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1, cv2.LINE_AA)
 
 
 # --- Main loop ---------------------------------------------------------------
@@ -122,6 +130,7 @@ def main() -> None:
         raise RuntimeError("Could not open webcam (device index 0).")
 
     model = YOLO(MODEL_PATH)
+    prev_time = time.time()
 
     try:
         while True:
@@ -133,6 +142,11 @@ def main() -> None:
 
             results = model(frame)[0]
             annotated_frame = results.plot()
+
+            now = time.time()
+            fps = 1.0 / max(now - prev_time, 1e-6)
+            prev_time = now
+            draw_fps(annotated_frame, fps)
 
             wrist_x, wrist_y = get_right_wrist(results)
             wrist_point = (wrist_x, wrist_y) if wrist_x is not None else None
