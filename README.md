@@ -183,6 +183,20 @@ the green `KP10` marker is visible.
 - NumPy
 - Ultralytics YOLO11 Pose
 
+## FAQ
+
+**Can I use a video file instead of a webcam?**
+Yes — pass the file path to `cv2.VideoCapture("path/to/video.mp4")` in `main()`.
+
+**Why does the button fill even when I'm not touching it?**
+Your wrist is likely within the rectangle coordinates. Increase `x1`/`y1` margins or reduce the button size in `config.py`.
+
+**Can I track a different body part?**
+Yes — change `RIGHT_WRIST_INDEX` to any COCO-17 index (0–16). The `--left-hand` flag switches to KP9 automatically.
+
+**Does it work on macOS/Linux?**
+Yes — the code is platform-agnostic. Make sure your webcam is accessible and adjust the device index if needed.
+
 ## Future Work
 
 - [ ] Add a "click" debounce so the buttons don't trigger every single frame.
