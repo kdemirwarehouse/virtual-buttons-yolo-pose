@@ -49,6 +49,7 @@ WRIST_COLOR = (0, 255, 0)      # green
 # Press 'q' or ESC to quit.
 QUIT_KEY = ord("q")
 ESC_KEY = 27
+SKELETON_TOGGLE_KEY = ord("s")
 WAIT_KEY_DELAY_MS = 5
 
 # Minimum consecutive frames a wrist must stay in a button to count as a press.
@@ -169,6 +170,7 @@ def main() -> None:
     right_count = 0
     left_was_pressed = False
     right_was_pressed = False
+    show_skeleton = True
 
     try:
         while True:
@@ -179,7 +181,7 @@ def main() -> None:
             frame = cv2.flip(frame, 1)
 
             results = model(frame)[0]
-            annotated_frame = results.plot()
+            annotated_frame = results.plot() if show_skeleton else frame.copy()
 
             now = time.time()
             fps = 1.0 / max(now - prev_time, 1e-6)
@@ -215,6 +217,8 @@ def main() -> None:
 
             cv2.imshow(WINDOW_NAME, annotated_frame)
             key = cv2.waitKey(WAIT_KEY_DELAY_MS) & 0xFF
+            if key == SKELETON_TOGGLE_KEY:
+                show_skeleton = not show_skeleton
             if key == QUIT_KEY or key == ESC_KEY:
                 break
     finally:
