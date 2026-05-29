@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "virtual-buttons-yolo-pose"
+version = "0.1.0"
+description = "Touchless virtual buttons via YOLO11 pose estimation and webcam"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = [
+    "opencv-python>=4.8.0",
+    "numpy>=1.24.0",
+    "ultralytics>=8.3.0",
+]
+
+[project.scripts]
+virtual-buttons = "src.virtual_buttons:main"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
