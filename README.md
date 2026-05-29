@@ -90,14 +90,24 @@ pip install -r requirements.txt
 ### 4. Run the app
 
 ```bash
+# Default: right wrist, camera 0
 python src/virtual_buttons.py
+
+# Use left wrist instead
+python src/virtual_buttons.py --left-hand
+
+# Use a different camera
+python src/virtual_buttons.py --camera 1
+
+# Combine flags
+python src/virtual_buttons.py --left-hand --camera 2
 ```
 
 On the very first launch Ultralytics will download `yolo11m-pose.pt`
 automatically. Move it into the `model/` folder afterwards (or change
-`MODEL_PATH` in `src/virtual_buttons.py`).
+`MODEL_PATH` in `src/config.py`).
 
-Press **`q`** to quit.
+Press **`q`** or **`ESC`** to quit.
 
 ## How It Works
 
