@@ -46,6 +46,9 @@ QUIT_KEY = ord("q")
 ESC_KEY = 27
 WAIT_KEY_DELAY_MS = 5
 
+# Minimum consecutive frames a wrist must stay in a button to count as a press.
+DEBOUNCE_FRAMES = 6
+
 
 # --- Helpers -----------------------------------------------------------------
 
@@ -132,6 +135,8 @@ def main() -> None:
 
     model = YOLO(MODEL_PATH)
     prev_time = time.time()
+    left_hold = 0
+    right_hold = 0
 
     try:
         while True:
@@ -155,8 +160,14 @@ def main() -> None:
             if wrist_point is not None:
                 draw_wrist_marker(annotated_frame, wrist_point)
 
-            left_pressed = wrist_point is not None and point_in_rect(wrist_point, LEFT_BUTTON)
-            right_pressed = wrist_point is not None and point_in_rect(wrist_point, RIGHT_BUTTON)
+            in_left = wrist_point is not None and point_in_rect(wrist_point, LEFT_BUTTON)
+            in_right = wrist_point is not None and point_in_rect(wrist_point, RIGHT_BUTTON)
+
+            left_hold = left_hold + 1 if in_left else 0
+            right_hold = right_hold + 1 if in_right else 0
+
+            left_pressed = left_hold >= DEBOUNCE_FRAMES
+            right_pressed = right_hold >= DEBOUNCE_FRAMES
 
             draw_button(annotated_frame, LEFT_BUTTON, LEFT_COLOR, "Left", left_pressed)
             draw_button(annotated_frame, RIGHT_BUTTON, RIGHT_COLOR, "Right", right_pressed)
